@@ -77,10 +77,23 @@ def get_totals(sentiment_frequencies):
         total_words_in_negative+=sentiment_frequencies[word][0]
         total_words_in_positive+=sentiment_frequencies[word][1]
         total_words_in_neutral+=sentiment_frequencies[word][2]
-    return total_unique_words, total_words_in_negative, total_unique_positive, total_words_in_neutral
+    return total_unique_words, total_words_in_negative, total_words_in_positive, total_words_in_neutral
 
 
 def train_model(sentiment_frequencies, full_training_set_clean):
-    probability_positive = len(positive_tweets_training_set)/len(full_training_set_clean)
-    probability_negative = len(negative_tweets_training_set)/len(full_training_set_clean)
-    probability_neutral = len(neutral_tweets_training_set)/len(full_training_set_clean)
+    all_word_probabilities = {}
+    total = len(full_training_set_clean)
+    probability_positive = len(positive_tweets_training_set)/total
+    probability_negative = len(negative_tweets_training_set)/total
+    probability_neutral = len(neutral_tweets_training_set)/total
+    total_unique_words, total_words_in_negative, total_words_in_positive, total_words_in_neutral = get_totals(sentiment_frequencies)
+    for word in sentiment_frequencies:
+        prob_word_negative = sentiment_frequencies[word][0]/total_words_in_negative
+        prob_word_positive = sentiment_frequencies[word][1]/total_words_in_positive
+        prob_word_neutral = sentiment_frequencies[word][2]/total_words_in_neutral
+        all_word_probabilities[word] = [prob_word_negative, prob_word_positive, prob_word_neutral]
+    return probability_positive, probability_negative, probability_neutral, all_word_probabilities
+
+def analyze_tweet(test_tweet, probability_positive, probability_negative, probability_neutral, all_word_probabilities):
+    test_tweet = preprocess(test_tweet)
+    tokenized_tweet = tokenize(test_tweet)
