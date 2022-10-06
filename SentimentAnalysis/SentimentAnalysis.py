@@ -18,21 +18,28 @@ positive_tweets_training_set = []
 negative_tweets_training_set = []
 neutral_tweets_training_set = []
 full_training_set = {}
-sentiments = ['negative', 'positive', 'neutral']
+positive_tweets_test_set = []
+negative_tweets_test_set = []
+neutral_tweets_test_set = []
+full_test_set = {}
+#sentiments = ['negative', 'positive', 'neutral']
 sentiment_frequencies = {}
-total_words = total_negative = total_unique_negative = total_positive = total_unique_positive = total_neutral = total_unique_neutral = 0
+#total_words = total_negative = total_unique_negative = total_positive = total_unique_positive = total_neutral = total_unique_neutral = 0
 
 def read_csv(csv_filename):
     df = pd.read_csv(csv_filename)
     tweets = df['textOriginal']
     sentiments = df['Sentiment']
-    for tweet in tweets:
-        if sentiments[tweet] == 0:
-            negative_tweets_training_set += tweets[tweet]
-        elif sentiments[tweet] == 1:
-            positive_tweets_training_set += tweets[tweet]
+    size = len(tweets)
+    for i in range(size):
+        tweet = preprocess(tweets[i])
+        tweet_tokenized = tokenize(tweet)
+        if sentiments[i] == 0:
+            negative_tweets_training_set += tweet_tokenized
+        elif sentiments[i] == 1:
+            positive_tweets_training_set += tweet_tokenized
         else:
-            neutral_tweets_training_set += tweets[tweet]
+            neutral_tweets_training_set += tweet_tokenized
 
 def preprocess(tweet):
     tweet = re.sub(r'[^\x00-\x7F]', '', tweet) 
@@ -125,3 +132,7 @@ def analyze_tweet(test_tweet, prior_probability_positive, prior_probability_nega
             prob_tweet_positive*=0.33
             prob_tweet_neutral*=0.33
     return max(prob_tweet_positive, prob_tweet_negative, prob_tweet_neutral)
+
+
+def test_model_accuracy():
+    
