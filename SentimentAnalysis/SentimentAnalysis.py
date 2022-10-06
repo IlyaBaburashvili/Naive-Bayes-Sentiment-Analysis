@@ -1,8 +1,8 @@
 import nltk
 import numpy as np
+import pandas as pd
 import re
 import string
-import pandas as pd
 from nltk.corpus import twitter_samples
 from nltk.corpus import stopwords
 from nltk.tokenize import TweetTokenizer
@@ -98,19 +98,30 @@ def get_totals(sentiment_frequencies):
 def train_model(sentiment_frequencies, full_training_set_clean):
     all_word_probabilities = {}
     total = len(full_training_set_clean)
-    probability_positive = len(positive_tweets_training_set)/total
-    probability_negative = len(negative_tweets_training_set)/total
-    probability_neutral = len(neutral_tweets_training_set)/total
+    prior_probability_positive = len(positive_tweets_training_set)/total
+    prior_probability_negative = len(negative_tweets_training_set)/total
+    prior_probability_neutral = len(neutral_tweets_training_set)/total
     total_unique_words, total_words_in_negative, total_words_in_positive, total_words_in_neutral = get_totals(sentiment_frequencies)
     for word in sentiment_frequencies:
         prob_word_negative = sentiment_frequencies[word][0]/total_words_in_negative
         prob_word_positive = sentiment_frequencies[word][1]/total_words_in_positive
         prob_word_neutral = sentiment_frequencies[word][2]/total_words_in_neutral
         all_word_probabilities[word] = [prob_word_negative, prob_word_positive, prob_word_neutral]
-    return probability_positive, probability_negative, probability_neutral, all_word_probabilities
+    return prior_probability_positive, prior_probability_negative, prior_probability_neutral, all_word_probabilities
 
-def analyze_tweet(test_tweet, probability_positive, probability_negative, probability_neutral, all_word_probabilities):
+def analyze_tweet(test_tweet, prior_probability_positive, prior_probability_negative, prior_probability_neutral, all_word_probabilities):
     test_tweet = preprocess(test_tweet)
     tokenized_tweet = tokenize(test_tweet)
+    prob_tweet_positive=prior_probability_positive
+    prob_tweet_negative=prior_probability_negative
+    prob_tweet_neutral=prior_probability_neutral
     for word in tokenized_tweet:
         if word in all_word_probabilities:
+            prob_tweet_negative*=all_word_probabilities[word][0]
+            prob_tweet_positive*=all_word_probabilities[word][1]
+            prob_tweet_neutral*=all_word_probabilities[word][2]
+        else:
+            prob_tweet_negative*=0.33
+            prob_tweet_positive*=0.33
+            prob_tweet_neutral*=0.33
+    return max(prob_tweet_positive, prob_tweet_negative, prob_tweet_neutral)
