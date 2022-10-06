@@ -2,6 +2,7 @@ import nltk
 import numpy as np
 import re
 import string
+import pandas as pd
 from nltk.corpus import twitter_samples
 from nltk.corpus import stopwords
 from nltk.tokenize import TweetTokenizer
@@ -11,13 +12,27 @@ from nltk.stem import PorterStemmer
 nltk.download('twitter_samples')
 nltk.download('stopwords')
 
-positive_tweets_training_set = twitter_samples.strings('positive_tweets.json')
-negative_tweets_training_set = twitter_samples.strings('negative_tweets.json')
+#positive_tweets_training_set = twitter_samples.strings('positive_tweets.json')
+#negative_tweets_training_set = twitter_samples.strings('negative_tweets.json')
+positive_tweets_training_set = []
+negative_tweets_training_set = []
 neutral_tweets_training_set = []
 full_training_set = {}
 sentiments = ['negative', 'positive', 'neutral']
 sentiment_frequencies = {}
 total_words = total_negative = total_unique_negative = total_positive = total_unique_positive = total_neutral = total_unique_neutral = 0
+
+def read_csv(csv_filename):
+    df = pd.read_csv(csv_filename)
+    tweets = df['textOriginal']
+    sentiments = df['Sentiment']
+    for tweet in tweets:
+        if sentiments[tweet] == 0:
+            negative_tweets_training_set += tweets[tweet]
+        elif sentiments[tweet] == 1:
+            positive_tweets_training_set += tweets[tweet]
+        else:
+            neutral_tweets_training_set += tweets[tweet]
 
 def preprocess(tweet):
     tweet = re.sub(r'[^\x00-\x7F]', '', tweet) 
@@ -97,3 +112,5 @@ def train_model(sentiment_frequencies, full_training_set_clean):
 def analyze_tweet(test_tweet, probability_positive, probability_negative, probability_neutral, all_word_probabilities):
     test_tweet = preprocess(test_tweet)
     tokenized_tweet = tokenize(test_tweet)
+    for word in tokenized_tweet:
+        if word in all_word_probabilities:
