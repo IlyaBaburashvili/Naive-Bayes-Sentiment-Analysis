@@ -32,14 +32,19 @@ def read_csv(csv_filename):
     sentiments = df['Sentiment']
     size = len(tweets)
     for i in range(size):
+        sentiment = sentiments[i]
         tweet = preprocess(tweets[i])
         tweet_tokenized = tokenize(tweet)
-        if sentiments[i] == 0:
+        update_sentiment_count(tweet_tokenized, sentiment)
+        if sentiment == 0:
             negative_tweets_training_set += tweet_tokenized
-        elif sentiments[i] == 1:
+            full_training_set[tweet_tokenized] = 0
+        elif sentiment == 1:
             positive_tweets_training_set += tweet_tokenized
+            full_training_set[tweet_tokenized] = 1
         else:
             neutral_tweets_training_set += tweet_tokenized
+            full_training_set[tweet_tokenized] = 2
 
 def preprocess(tweet):
     tweet = re.sub(r'[^\x00-\x7F]', '', tweet) 
@@ -79,13 +84,13 @@ def update_sentiment_count(tweet, sentiment):
   #  all_sentiments = np.append(all_sentiments, 2(len(neutral_tweets)))
   #  return all_sentiments
 
-def create_full_training_set(positive_training_set, negative_training_set, neutral_training_set):
-    for tweet in negative_training_set:
-        full_training_set[tweet] = 0
-    for tweet in positive_training_set:
-        full_training_set[tweet] = 1
-    for tweet in neutral_training_set:
-        full_training_set[tweet] = 2
+#def create_full_training_set(positive_training_set, negative_training_set, neutral_training_set):
+#    for tweet in negative_training_set:
+#        full_training_set[tweet] = 0
+#    for tweet in positive_training_set:
+#        full_training_set[tweet] = 1
+#   for tweet in neutral_training_set:
+#       full_training_set[tweet] = 2
 
 def get_totals(sentiment_frequencies):
     total_unique_words = len(sentiment_frequencies)
@@ -102,9 +107,9 @@ def get_totals(sentiment_frequencies):
     return total_unique_words, total_words_in_negative, total_words_in_positive, total_words_in_neutral
 
 
-def train_model(sentiment_frequencies, full_training_set_clean):
+def train_model():
     all_word_probabilities = {}
-    total = len(full_training_set_clean)
+    total = len(full_training_set)
     prior_probability_positive = len(positive_tweets_training_set)/total
     prior_probability_negative = len(negative_tweets_training_set)/total
     prior_probability_neutral = len(neutral_tweets_training_set)/total
@@ -134,5 +139,18 @@ def analyze_tweet(test_tweet, prior_probability_positive, prior_probability_nega
     return max(prob_tweet_positive, prob_tweet_negative, prob_tweet_neutral)
 
 
-def test_model_accuracy():
-    
+def test_model_accuracy(prior_probability_positive, prior_probability_negative, prior_probability_neutral, all_word_probabilities):
+    total = len(full_test_set)
+    correct = 0
+    for tweet in full_test_set:
+        res = analyze_tweet(tweet, prior_probability_positive, prior_probability_negative, prior_probability_neutral, all_word_probabilities)
+        if res == full_test_set[tweet]:
+            correct+=1
+    return correct/total
+
+
+def main():
+    read_csv('sdsd')
+    a, b ,c, d = train_model()
+    accuracy = test_model_accuracy(a, b, c, d)
+    print(accuracy)
