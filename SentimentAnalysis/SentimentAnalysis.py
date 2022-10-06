@@ -26,7 +26,7 @@ full_test_set = {}
 sentiment_frequencies = {}
 #total_words = total_negative = total_unique_negative = total_positive = total_unique_positive = total_neutral = total_unique_neutral = 0
 
-def read_csv(csv_filename):
+def read_train_csv(csv_filename):
     df = pd.read_csv(csv_filename)
     tweets = df['textOriginal']
     sentiments = df['Sentiment']
@@ -45,6 +45,25 @@ def read_csv(csv_filename):
         else:
             neutral_tweets_training_set += tweet_tokenized
             full_training_set[tweet_tokenized] = 2
+
+def read_test_csv(csv_filename):
+    df = pd.read_csv(csv_filename)
+    tweets = df['textOriginal']
+    sentiments = df['Sentiment']
+    size = len(tweets)
+    for i in range(size):
+        sentiment = sentiments[i]
+        tweet = preprocess(tweets[i])
+        tweet_tokenized = tokenize(tweet)
+        if sentiment == 0:
+            negative_tweets_test_set += tweet_tokenized
+            full_test_set[tweet_tokenized] = 0
+        elif sentiment == 1:
+            positive_tweets_test_set += tweet_tokenized
+            full_test_set[tweet_tokenized] = 1
+        else:
+            neutral_tweets_test_set += tweet_tokenized
+            full_test_set[tweet_tokenized] = 2
 
 def preprocess(tweet):
     tweet = re.sub(r'[^\x00-\x7F]', '', tweet) 
@@ -150,7 +169,11 @@ def test_model_accuracy(prior_probability_positive, prior_probability_negative, 
 
 
 def main():
-    read_csv('sdsd')
-    a, b ,c, d = train_model()
+    read_train_csv('sdsd')
+    read_test_csv('sdsd')
+    a, b, c, d = train_model()
     accuracy = test_model_accuracy(a, b, c, d)
     print(accuracy)
+
+if __name__ == "__main__":
+    main()
