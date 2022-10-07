@@ -1,3 +1,4 @@
+from binascii import a2b_base64
 import nltk
 import numpy as np
 import pandas as pd
@@ -25,53 +26,65 @@ full_test_set = {}
 #sentiments = ['negative', 'positive', 'neutral']
 sentiment_frequencies = {}
 #total_words = total_negative = total_unique_negative = total_positive = total_unique_positive = total_neutral = total_unique_neutral = 0
-
+index = 0
 def read_train_csv(csv_filename):
-    df = pd.read_csv(csv_filename)
+    df = pd.read_csv(csv_filename, encoding='latin-1')
     tweets = df['textOriginal']
     sentiments = df['Sentiment']
     size = len(tweets)
-    for i in range(size):
-        sentiment = sentiments[i]
+    for i in range(100000):
+        sentiment = int(sentiments[i])
+        if sentiment == 0:
+            sentiment = 2
+        elif sentiment == -1:
+            sentiment = 0
+        #print(tweets[i])
         tweet = preprocess(tweets[i])
         tweet_tokenized = tokenize(tweet)
         update_sentiment_count(tweet_tokenized, sentiment)
         if sentiment == 0:
-            negative_tweets_training_set += tweet_tokenized
+            negative_tweets_training_set.append(tweet_tokenized)
             full_training_set[tweet_tokenized] = 0
         elif sentiment == 1:
-            positive_tweets_training_set += tweet_tokenized
+            positive_tweets_training_set.append(tweet_tokenized)
             full_training_set[tweet_tokenized] = 1
         else:
-            neutral_tweets_training_set += tweet_tokenized
+            neutral_tweets_training_set.append(tweet_tokenized)
             full_training_set[tweet_tokenized] = 2
 
 def read_test_csv(csv_filename):
-    df = pd.read_csv(csv_filename)
+    df = pd.read_csv(csv_filename, encoding='latin-1')
     tweets = df['textOriginal']
     sentiments = df['Sentiment']
     size = len(tweets)
-    for i in range(size):
+    for i in range(100001,110000):
         sentiment = sentiments[i]
+        if sentiment == 4:
+            sentiment = 1
+        #print(tweets[i])
         tweet = preprocess(tweets[i])
         tweet_tokenized = tokenize(tweet)
         if sentiment == 0:
-            negative_tweets_test_set += tweet_tokenized
+            negative_tweets_test_set.append(tweet_tokenized)
             full_test_set[tweet_tokenized] = 0
         elif sentiment == 1:
-            positive_tweets_test_set += tweet_tokenized
+            positive_tweets_test_set.append(tweet_tokenized)
             full_test_set[tweet_tokenized] = 1
         else:
-            neutral_tweets_test_set += tweet_tokenized
+            neutral_tweets_test_set.append(tweet_tokenized)
             full_test_set[tweet_tokenized] = 2
 
 def preprocess(tweet):
+    print("first", tweet)
     tweet = re.sub(r'[^\x00-\x7F]', '', tweet) 
-    tweet = re.sub(r'[^a-zA-Z0-9]', '', tweet)
+    tweet = re.sub(r'[^A-Za-z0-9 ]+', '', tweet)
     tweet = re.sub(r'[0-9]+', '', tweet)
     tweet = re.sub(r'https?:\/\/.*[\r\n]*', '', tweet)
     tweet = re.sub('(@[A-Za-z0-9_]+)', '', tweet)
+    print("fixed", tweet)
     return tweet
+  
+
     
 
 def tokenize(tweet):
@@ -86,9 +99,10 @@ def tokenize(tweet):
         if (token not in words_to_remove and token not in string.punctuation):
             final_word = stemmer.stem(token)   
             processed_tweet.append(final_word)
-    return processed_tweet
+    return tuple(processed_tweet)
 
 def update_sentiment_count(tweet, sentiment):
+    print(sentiment)
     for word in tweet:
         if word in sentiment_frequencies:
             sentiment_frequencies[word][sentiment]+=1
@@ -141,12 +155,12 @@ def train_model():
     return prior_probability_positive, prior_probability_negative, prior_probability_neutral, all_word_probabilities
 
 def analyze_tweet(test_tweet, prior_probability_positive, prior_probability_negative, prior_probability_neutral, all_word_probabilities):
-    test_tweet = preprocess(test_tweet)
-    tokenized_tweet = tokenize(test_tweet)
+    #test_tweet = preprocess(test_tweet)
+    #tokenized_tweet = tokenize(test_tweet)
     prob_tweet_positive=prior_probability_positive
     prob_tweet_negative=prior_probability_negative
     prob_tweet_neutral=prior_probability_neutral
-    for word in tokenized_tweet:
+    for word in test_tweet:
         if word in all_word_probabilities:
             prob_tweet_negative*=all_word_probabilities[word][0]
             prob_tweet_positive*=all_word_probabilities[word][1]
@@ -155,7 +169,13 @@ def analyze_tweet(test_tweet, prior_probability_positive, prior_probability_nega
             prob_tweet_negative*=0.33
             prob_tweet_positive*=0.33
             prob_tweet_neutral*=0.33
-    return max(prob_tweet_positive, prob_tweet_negative, prob_tweet_neutral)
+    res = max(prob_tweet_negative, prob_tweet_positive, prob_tweet_neutral)
+    if res == prob_tweet_negative:
+        return 0
+    elif res == prob_tweet_positive:
+        return 1
+    else:
+        return 2
 
 
 def test_model_accuracy(prior_probability_positive, prior_probability_negative, prior_probability_neutral, all_word_probabilities):
@@ -165,12 +185,16 @@ def test_model_accuracy(prior_probability_positive, prior_probability_negative, 
         res = analyze_tweet(tweet, prior_probability_positive, prior_probability_negative, prior_probability_neutral, all_word_probabilities)
         if res == full_test_set[tweet]:
             correct+=1
+            print("Correct")
+        else:
+            print (res, full_test_set[tweet])
+            print("Incorrect")
     return correct/total
 
 
 def main():
-    read_train_csv('sdsd')
-    read_test_csv('sdsd')
+    read_train_csv('Twitter_Data1.csv')
+    read_test_csv('Twitter_Data1.csv')
     a, b, c, d = train_model()
     accuracy = test_model_accuracy(a, b, c, d)
     print(accuracy)
