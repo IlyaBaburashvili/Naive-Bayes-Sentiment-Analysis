@@ -1,4 +1,5 @@
 from binascii import a2b_base64
+import json
 import nltk
 import numpy as np
 import pandas as pd
@@ -8,7 +9,8 @@ from nltk.corpus import twitter_samples
 from nltk.corpus import stopwords
 from nltk.tokenize import TweetTokenizer
 from nltk.stem import PorterStemmer
-
+from nltk.stem import WordNetLemmatizer
+import math
 
 nltk.download('twitter_samples')
 nltk.download('stopwords')
@@ -32,13 +34,22 @@ def read_train_csv(csv_filename):
     tweets = df['textOriginal']
     sentiments = df['Sentiment']
     size = len(tweets)
-    for i in range(100000):
-        sentiment = int(sentiments[i])
-        if sentiment == 0:
-            sentiment = 2
-        elif sentiment == -1:
-            sentiment = 0
+    sentiment = -1
+    for i in range(110000):
+        #if np.isnan(sentiments[i]):
+           # break
+        #sentiment = int(sentiments[i])
+        #if sentiment == 0:
+        #    sentiment = 2
+        #elif sentiment == -1:
+        #    sentiment = 0
         #print(tweets[i])
+        if sentiments[i] == 'positive' or sentiments[i] == 1:
+            sentiment = 1
+        elif sentiments[i] == 'negative' or sentiments[i] == 2:
+            sentiment = 0
+        elif sentiments[i] == 'neutral' or sentiments[i] == 0:
+            sentiment = 2
         tweet = preprocess(tweets[i])
         tweet_tokenized = tokenize(tweet)
         update_sentiment_count(tweet_tokenized, sentiment)
@@ -52,16 +63,26 @@ def read_train_csv(csv_filename):
             neutral_tweets_training_set.append(tweet_tokenized)
             full_training_set[tweet_tokenized] = 2
 
+
 def read_test_csv(csv_filename):
     df = pd.read_csv(csv_filename, encoding='latin-1')
     tweets = df['textOriginal']
     sentiments = df['Sentiment']
     size = len(tweets)
-    for i in range(100001,110000):
-        sentiment = sentiments[i]
-        if sentiment == 4:
-            sentiment = 1
-        #print(tweets[i])
+    sentiment = -1
+    for i in range(110001, 125000):
+        sentiment = int(sentiments[i])
+        if sentiment == 0:
+            sentiment = 2
+        elif sentiment == -1:
+            sentiment = 0
+        print(tweets[i])
+        #if sentiments[i] == 'positive':
+        #    sentiment = 1
+        #elif sentiments[i] == 'negative':
+        #    sentiment = 0
+        #else:
+        #    sentiment = 2
         tweet = preprocess(tweets[i])
         tweet_tokenized = tokenize(tweet)
         if sentiment == 0:
@@ -86,10 +107,10 @@ def preprocess(tweet):
   
 
     
-
 def tokenize(tweet):
     processed_tweet = []
     stemmer = PorterStemmer() 
+    lemmatizer = WordNetLemmatizer()
     words_to_remove = stopwords.words('english')
     tweet_tokenizer = TweetTokenizer(preserve_case=False, reduce_len=True, strip_handles=True)
     tokens = tweet_tokenizer.tokenize(tweet)
@@ -97,7 +118,8 @@ def tokenize(tweet):
       # remove stopwords and punctuation
     for token in tokens:
         if (token not in words_to_remove and token not in string.punctuation):
-            final_word = stemmer.stem(token)   
+            token = token.lower()
+            final_word = lemmatizer.lemmatize(token)
             processed_tweet.append(final_word)
     return tuple(processed_tweet)
 
@@ -152,6 +174,9 @@ def train_model():
         prob_word_positive = sentiment_frequencies[word][1]/total_words_in_positive
         prob_word_neutral = sentiment_frequencies[word][2]/total_words_in_neutral
         all_word_probabilities[word] = [prob_word_negative, prob_word_positive, prob_word_neutral]
+    all_probablities_json = json.dumps(all_word_probabilities, indent=4)
+    #with open("probabilies2.json", "w") as outfile:
+        #outfile.write(all_probablities_json)
     return prior_probability_positive, prior_probability_negative, prior_probability_neutral, all_word_probabilities
 
 def analyze_tweet(test_tweet, prior_probability_positive, prior_probability_negative, prior_probability_neutral, all_word_probabilities):
@@ -193,6 +218,7 @@ def test_model_accuracy(prior_probability_positive, prior_probability_negative, 
 
 
 def main():
+    #read_train_csv('Tweets1.csv')
     read_train_csv('Twitter_Data1.csv')
     read_test_csv('Twitter_Data1.csv')
     a, b, c, d = train_model()
