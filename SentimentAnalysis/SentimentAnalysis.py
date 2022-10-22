@@ -12,6 +12,8 @@ from nltk.stem import PorterStemmer
 from nltk.stem import WordNetLemmatizer
 import math
 
+
+
 nltk.download('twitter_samples')
 nltk.download('stopwords')
 
@@ -38,18 +40,18 @@ def read_train_csv(csv_filename):
     for i in range(110000):
         #if np.isnan(sentiments[i]):
            # break
-        #sentiment = int(sentiments[i])
-        #if sentiment == 0:
-        #    sentiment = 2
-        #elif sentiment == -1:
-        #    sentiment = 0
-        #print(tweets[i])
-        if sentiments[i] == 'positive' or sentiments[i] == 1:
-            sentiment = 1
-        elif sentiments[i] == 'negative' or sentiments[i] == 2:
-            sentiment = 0
-        elif sentiments[i] == 'neutral' or sentiments[i] == 0:
+        sentiment = int(sentiments[i])
+        if sentiment == 0:
             sentiment = 2
+        elif sentiment == -1:
+            sentiment = 0
+        print(tweets[i])
+        #if sentiments[i] == 'positive' or sentiments[i] == 1:
+        #    sentiment = 1
+        #elif sentiments[i] == 'negative' or sentiments[i] == 2:
+        #    sentiment = 0
+        #elif sentiments[i] == 'neutral' or sentiments[i] == 0:
+         #   sentiment = 2
         tweet = preprocess(tweets[i])
         tweet_tokenized = tokenize(tweet)
         update_sentiment_count(tweet_tokenized, sentiment)
@@ -78,11 +80,11 @@ def read_test_csv(csv_filename):
             sentiment = 0
         print(tweets[i])
         #if sentiments[i] == 'positive':
-        #    sentiment = 1
+            #sentiment = 1
         #elif sentiments[i] == 'negative':
-        #    sentiment = 0
+            #sentiment = 0
         #else:
-        #    sentiment = 2
+            #sentiment = 2
         tweet = preprocess(tweets[i])
         tweet_tokenized = tokenize(tweet)
         if sentiment == 0:
@@ -94,6 +96,14 @@ def read_test_csv(csv_filename):
         else:
             neutral_tweets_test_set.append(tweet_tokenized)
             full_test_set[tweet_tokenized] = 2
+
+def read_json(json_filename):
+    with open(json_filename) as json_file:
+        all_word_probabilities = json.load(json_file)
+        prior_probability_positive = all_word_probabilities['neg_pos_neutral_prob'][0]
+        prior_probability_negative = all_word_probabilities['neg_pos_neutral_prob'][1]
+        prior_probability_neutral = all_word_probabilities['neg_pos_neutral_prob'][2]
+    return prior_probability_positive, prior_probability_negative, prior_probability_neutral, all_word_probabilities
 
 def preprocess(tweet):
     print("first", tweet)
@@ -174,9 +184,10 @@ def train_model():
         prob_word_positive = sentiment_frequencies[word][1]/total_words_in_positive
         prob_word_neutral = sentiment_frequencies[word][2]/total_words_in_neutral
         all_word_probabilities[word] = [prob_word_negative, prob_word_positive, prob_word_neutral]
+    all_word_probabilities['neg_pos_neutral_prob'] = [prior_probability_negative, prior_probability_positive, prior_probability_neutral]
     all_probablities_json = json.dumps(all_word_probabilities, indent=4)
-    #with open("probabilies2.json", "w") as outfile:
-        #outfile.write(all_probablities_json)
+    with open("probabilies2.json", "w") as outfile:
+        outfile.write(all_probablities_json)
     return prior_probability_positive, prior_probability_negative, prior_probability_neutral, all_word_probabilities
 
 def analyze_tweet(test_tweet, prior_probability_positive, prior_probability_negative, prior_probability_neutral, all_word_probabilities):
@@ -219,9 +230,10 @@ def test_model_accuracy(prior_probability_positive, prior_probability_negative, 
 
 def main():
     #read_train_csv('Tweets1.csv')
-    read_train_csv('Twitter_Data1.csv')
+    #read_train_csv('Twitter_Data1.csv')
+    a, b, c, d = read_json('probabilies2.json')
     read_test_csv('Twitter_Data1.csv')
-    a, b, c, d = train_model()
+    #a, b, c, d = train_model()
     accuracy = test_model_accuracy(a, b, c, d)
     print(accuracy)
 
