@@ -72,13 +72,13 @@ def read_test_csv(csv_filename):
     sentiments = df['Sentiment']
     size = len(tweets)
     sentiment = -1
-    for i in range(110001, 125000):
+    for i in range(1, 1000):
         sentiment = int(sentiments[i])
-        if sentiment == 0:
-            sentiment = 2
-        elif sentiment == -1:
-            sentiment = 0
-        print(tweets[i])
+        #if sentiment == 0:
+        #    sentiment = 2
+        #elif sentiment == -1:
+        #    sentiment = 0
+        #print(tweets[i])
         #if sentiments[i] == 'positive':
             #sentiment = 1
         #elif sentiments[i] == 'negative':
@@ -112,7 +112,7 @@ def preprocess(tweet):
     tweet = re.sub(r'[0-9]+', '', tweet)
     tweet = re.sub(r'https?:\/\/.*[\r\n]*', '', tweet)
     tweet = re.sub('(@[A-Za-z0-9_]+)', '', tweet)
-    print("fixed", tweet)
+    #print("fixed", tweet)
     return tweet
   
 
@@ -129,8 +129,11 @@ def tokenize(tweet):
     for token in tokens:
         if (token not in words_to_remove and token not in string.punctuation):
             token = token.lower()
-            final_word = lemmatizer.lemmatize(token)
+            final_word = lemmatizer.lemmatize(token, pos="v")
+            if final_word!=token:
+                print(final_word, token)
             processed_tweet.append(final_word)
+    print(processed_tweet)
     return tuple(processed_tweet)
 
 def update_sentiment_count(tweet, sentiment):
@@ -186,7 +189,7 @@ def train_model():
         all_word_probabilities[word] = [prob_word_negative, prob_word_positive, prob_word_neutral]
     all_word_probabilities['neg_pos_neutral_prob'] = [prior_probability_negative, prior_probability_positive, prior_probability_neutral]
     all_probablities_json = json.dumps(all_word_probabilities, indent=4)
-    with open("probabilies2.json", "w") as outfile:
+    with open("probabilies3.json", "w") as outfile:
         outfile.write(all_probablities_json)
     return prior_probability_positive, prior_probability_negative, prior_probability_neutral, all_word_probabilities
 
@@ -202,9 +205,10 @@ def analyze_tweet(test_tweet, prior_probability_positive, prior_probability_nega
             prob_tweet_positive*=all_word_probabilities[word][1]
             prob_tweet_neutral*=all_word_probabilities[word][2]
         else:
-            prob_tweet_negative*=0.33
-            prob_tweet_positive*=0.33
-            prob_tweet_neutral*=0.33
+            continue
+            #prob_tweet_negative*=0.33
+            #prob_tweet_positive*=0.33
+            #prob_tweet_neutral*=0.33
     res = max(prob_tweet_negative, prob_tweet_positive, prob_tweet_neutral)
     if res == prob_tweet_negative:
         return 0
@@ -221,18 +225,20 @@ def test_model_accuracy(prior_probability_positive, prior_probability_negative, 
         res = analyze_tweet(tweet, prior_probability_positive, prior_probability_negative, prior_probability_neutral, all_word_probabilities)
         if res == full_test_set[tweet]:
             correct+=1
-            print("Correct")
+            print(tweet)
+            print("Correct\n")
         else:
+            print(tweet)
             print (res, full_test_set[tweet])
-            print("Incorrect")
+            print("Incorrect\n")
     return correct/total
 
 
 def main():
     #read_train_csv('Tweets1.csv')
     #read_train_csv('Twitter_Data1.csv')
-    a, b, c, d = read_json('probabilies2.json')
-    read_test_csv('Twitter_Data1.csv')
+    a, b, c, d = read_json('probabilies3.json')
+    read_test_csv('comments_Aiqa9l1vFNI.csv')
     #a, b, c, d = train_model()
     accuracy = test_model_accuracy(a, b, c, d)
     print(accuracy)
