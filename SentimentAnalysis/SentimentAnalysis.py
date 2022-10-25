@@ -100,8 +100,8 @@ def read_test_csv(csv_filename):
 def read_json(json_filename):
     with open(json_filename) as json_file:
         all_word_probabilities = json.load(json_file)
-        prior_probability_positive = all_word_probabilities['neg_pos_neutral_prob'][0]
-        prior_probability_negative = all_word_probabilities['neg_pos_neutral_prob'][1]
+        prior_probability_negative = all_word_probabilities['neg_pos_neutral_prob'][0]
+        prior_probability_positive = all_word_probabilities['neg_pos_neutral_prob'][1]
         prior_probability_neutral = all_word_probabilities['neg_pos_neutral_prob'][2]
     return prior_probability_positive, prior_probability_negative, prior_probability_neutral, all_word_probabilities
 
