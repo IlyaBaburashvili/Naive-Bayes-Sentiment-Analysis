@@ -113,6 +113,7 @@ def read_youtube(prior_probability_positive, prior_probability_negative, prior_p
         comment=tokenize(comment)
         sentiment=analyze_tweet(comment, prior_probability_positive, prior_probability_negative, prior_probability_neutral, all_word_probabilities)
         comments_df.set_value(index, 'Sentiments', sentiment)
+        index+=1
     return comments_df
 
 def preprocess(tweet):
