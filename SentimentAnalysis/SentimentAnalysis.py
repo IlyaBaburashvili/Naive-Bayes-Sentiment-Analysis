@@ -37,15 +37,15 @@ def read_train_csv(csv_filename):
     sentiments = df['Sentiment']
     size = len(tweets)
     sentiment = -1
-    for i in range(110000):
+    for i in range(6200):
         #if np.isnan(sentiments[i]):
            # break
         sentiment = int(sentiments[i])
-        if sentiment == 0:
-            sentiment = 2
-        elif sentiment == -1:
-            sentiment = 0
-        print(tweets[i])
+        #if sentiment == 0:
+         #   sentiment = 2
+        #elif sentiment == -1:
+         #   sentiment = 0
+        #print(tweets[i])
         #if sentiments[i] == 'positive' or sentiments[i] == 1:
         #    sentiment = 1
         #elif sentiments[i] == 'negative' or sentiments[i] == 2:
@@ -72,7 +72,7 @@ def read_test_csv(csv_filename):
     sentiments = df['Sentiment']
     size = len(tweets)
     sentiment = -1
-    for i in range(1, 1000):
+    for i in range(6201, 7001):
         sentiment = int(sentiments[i])
         #if sentiment == 0:
         #    sentiment = 2
@@ -104,6 +104,16 @@ def read_json(json_filename):
         prior_probability_positive = all_word_probabilities['neg_pos_neutral_prob'][1]
         prior_probability_neutral = all_word_probabilities['neg_pos_neutral_prob'][2]
     return prior_probability_positive, prior_probability_negative, prior_probability_neutral, all_word_probabilities
+
+def read_youtube(prior_probability_positive, prior_probability_negative, prior_probability_neutral, all_word_probabilities, comments_df):
+    comments=comments_df['textOriginal']
+    index=0
+    for comment in comments:
+        comment=preprocess(comment)
+        comment=tokenize(comment)
+        sentiment=analyze_tweet(comment, prior_probability_positive, prior_probability_negative, prior_probability_neutral, all_word_probabilities)
+        comments_df.set_value(index, 'Sentiments', sentiment)
+    return comments_df
 
 def preprocess(tweet):
     print("first", tweet)
@@ -188,9 +198,9 @@ def train_model():
         prob_word_neutral = sentiment_frequencies[word][2]/total_words_in_neutral
         all_word_probabilities[word] = [prob_word_negative, prob_word_positive, prob_word_neutral]
     all_word_probabilities['neg_pos_neutral_prob'] = [prior_probability_negative, prior_probability_positive, prior_probability_neutral]
-    all_probablities_json = json.dumps(all_word_probabilities, indent=4)
-    with open("probabilies3.json", "w") as outfile:
-        outfile.write(all_probablities_json)
+    #all_probablities_json = json.dumps(all_word_probabilities, indent=4)
+    #with open("probabilies4.json", "w") as outfile:
+     #   outfile.write(all_probablities_json)
     return prior_probability_positive, prior_probability_negative, prior_probability_neutral, all_word_probabilities
 
 def analyze_tweet(test_tweet, prior_probability_positive, prior_probability_negative, prior_probability_neutral, all_word_probabilities):
@@ -236,10 +246,10 @@ def test_model_accuracy(prior_probability_positive, prior_probability_negative, 
 
 def main():
     #read_train_csv('Tweets1.csv')
-    #read_train_csv('Twitter_Data1.csv')
-    a, b, c, d = read_json('probabilies3.json')
-    read_test_csv('comments_Aiqa9l1vFNI.csv')
-    #a, b, c, d = train_model()
+    read_train_csv('YouTubeTrainingSet.csv')
+    #a, b, c, d = read_json('probabilies3.json')
+    read_test_csv('YouTubeTrainingSet.csv')
+    a, b, c, d = train_model()
     accuracy = test_model_accuracy(a, b, c, d)
     print(accuracy)
 
