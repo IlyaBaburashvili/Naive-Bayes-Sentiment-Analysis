@@ -17,8 +17,6 @@ import math
 nltk.download('twitter_samples')
 nltk.download('stopwords')
 
-#positive_tweets_training_set = twitter_samples.strings('positive_tweets.json')
-#negative_tweets_training_set = twitter_samples.strings('negative_tweets.json')
 positive_tweets_training_set = []
 negative_tweets_training_set = []
 neutral_tweets_training_set = []
@@ -27,9 +25,8 @@ positive_tweets_test_set = []
 negative_tweets_test_set = []
 neutral_tweets_test_set = []
 full_test_set = {}
-#sentiments = ['negative', 'positive', 'neutral']
+sentiments = ['negative', 'positive', 'neutral']
 sentiment_frequencies = {}
-#total_words = total_negative = total_unique_negative = total_positive = total_unique_positive = total_neutral = total_unique_neutral = 0
 index = 0
 def read_train_csv(csv_filename):
     df = pd.read_csv(csv_filename, encoding='latin-1')
@@ -37,9 +34,7 @@ def read_train_csv(csv_filename):
     sentiments = df['Sentiment']
     size = len(tweets)
     sentiment = -1
-    for i in range(6200):
-        #if np.isnan(sentiments[i]):
-           # break
+    for i in range(7000):
         sentiment = int(sentiments[i])
         #if sentiment == 0:
          #   sentiment = 2
@@ -112,7 +107,7 @@ def read_youtube(prior_probability_positive, prior_probability_negative, prior_p
         comment=preprocess(comment)
         comment=tokenize(comment)
         sentiment=analyze_tweet(comment, prior_probability_positive, prior_probability_negative, prior_probability_neutral, all_word_probabilities)
-        comments_df.set_value(index, 'Sentiments', sentiment)
+        comments_df._set_value(index, 'Sentiment', sentiment)
         index+=1
     return comments_df
 
@@ -123,7 +118,6 @@ def preprocess(tweet):
     tweet = re.sub(r'[0-9]+', '', tweet)
     tweet = re.sub(r'https?:\/\/.*[\r\n]*', '', tweet)
     tweet = re.sub('(@[A-Za-z0-9_]+)', '', tweet)
-    #print("fixed", tweet)
     return tweet
   
 
@@ -156,26 +150,9 @@ def update_sentiment_count(tweet, sentiment):
             sentiment_frequencies[word] = [1, 1, 1]  #all start with 1 to avoid probability of 0
             sentiment_frequencies[word][sentiment]+=1
 
-#def get_all_sentiments(positive_tweets, negative_tweets, neutral_tweets):
- #   all_sentiments = np.array([])
-  #  all_sentiments = np.append(all_sentiments, np.ones(len(positive_tweets)))
-  #  all_sentiments = np.append(all_sentiments, np.zeros(len(negative_tweets)))
-  #  all_sentiments = np.append(all_sentiments, 2(len(neutral_tweets)))
-  #  return all_sentiments
-
-#def create_full_training_set(positive_training_set, negative_training_set, neutral_training_set):
-#    for tweet in negative_training_set:
-#        full_training_set[tweet] = 0
-#    for tweet in positive_training_set:
-#        full_training_set[tweet] = 1
-#   for tweet in neutral_training_set:
-#       full_training_set[tweet] = 2
 
 def get_totals(sentiment_frequencies):
     total_unique_words = len(sentiment_frequencies)
-    #total_unique_negative = 0
-    #total_unique_positive = 0
-    #total_unique_neutral = 0
     total_words_in_positive = 0
     total_words_in_negative = 0
     total_words_in_neutral = 0
@@ -199,9 +176,9 @@ def train_model():
         prob_word_neutral = sentiment_frequencies[word][2]/total_words_in_neutral
         all_word_probabilities[word] = [prob_word_negative, prob_word_positive, prob_word_neutral]
     all_word_probabilities['neg_pos_neutral_prob'] = [prior_probability_negative, prior_probability_positive, prior_probability_neutral]
-    #all_probablities_json = json.dumps(all_word_probabilities, indent=4)
-    #with open("probabilies4.json", "w") as outfile:
-     #   outfile.write(all_probablities_json)
+    all_probablities_json = json.dumps(all_word_probabilities, indent=4)
+   # with open("youtube_probabilies.json", "w") as outfile:
+    #    outfile.write(all_probablities_json)
     return prior_probability_positive, prior_probability_negative, prior_probability_neutral, all_word_probabilities
 
 def analyze_tweet(test_tweet, prior_probability_positive, prior_probability_negative, prior_probability_neutral, all_word_probabilities):
@@ -217,9 +194,6 @@ def analyze_tweet(test_tweet, prior_probability_positive, prior_probability_nega
             prob_tweet_neutral*=all_word_probabilities[word][2]
         else:
             continue
-            #prob_tweet_negative*=0.33
-            #prob_tweet_positive*=0.33
-            #prob_tweet_neutral*=0.33
     res = max(prob_tweet_negative, prob_tweet_positive, prob_tweet_neutral)
     if res == prob_tweet_negative:
         return 0
@@ -234,14 +208,8 @@ def test_model_accuracy(prior_probability_positive, prior_probability_negative, 
     correct = 0
     for tweet in full_test_set:
         res = analyze_tweet(tweet, prior_probability_positive, prior_probability_negative, prior_probability_neutral, all_word_probabilities)
-        if res == full_test_set[tweet]:
-            correct+=1
-            print(tweet)
-            print("Correct\n")
-        else:
-            print(tweet)
-            print (res, full_test_set[tweet])
-            print("Incorrect\n")
+        print(tweet)
+        print(sentiments[res], "\n")
     return correct/total
 
 
@@ -252,7 +220,9 @@ def main():
     read_test_csv('YouTubeTrainingSet.csv')
     a, b, c, d = train_model()
     accuracy = test_model_accuracy(a, b, c, d)
-    print(accuracy)
+    #print(accuracy)
 
 if __name__ == "__main__":
     main()
+
+
