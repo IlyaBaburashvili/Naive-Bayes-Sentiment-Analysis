@@ -156,26 +156,9 @@ def update_sentiment_count(tweet, sentiment):
             sentiment_frequencies[word] = [1, 1, 1]  #all start with 1 to avoid probability of 0
             sentiment_frequencies[word][sentiment]+=1
 
-#def get_all_sentiments(positive_tweets, negative_tweets, neutral_tweets):
- #   all_sentiments = np.array([])
-  #  all_sentiments = np.append(all_sentiments, np.ones(len(positive_tweets)))
-  #  all_sentiments = np.append(all_sentiments, np.zeros(len(negative_tweets)))
-  #  all_sentiments = np.append(all_sentiments, 2(len(neutral_tweets)))
-  #  return all_sentiments
-
-#def create_full_training_set(positive_training_set, negative_training_set, neutral_training_set):
-#    for tweet in negative_training_set:
-#        full_training_set[tweet] = 0
-#    for tweet in positive_training_set:
-#        full_training_set[tweet] = 1
-#   for tweet in neutral_training_set:
-#       full_training_set[tweet] = 2
 
 def get_totals(sentiment_frequencies):
     total_unique_words = len(sentiment_frequencies)
-    #total_unique_negative = 0
-    #total_unique_positive = 0
-    #total_unique_neutral = 0
     total_words_in_positive = 0
     total_words_in_negative = 0
     total_words_in_neutral = 0
